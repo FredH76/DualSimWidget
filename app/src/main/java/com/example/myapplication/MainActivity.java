@@ -2,6 +2,7 @@ package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -14,6 +15,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -29,34 +31,57 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     TextView textWidget;
-    Button button;
+    Button sendSmsBtn, switchBtn;
     AppWidgetManager appWidgetManager;
     int appWidgetId;
     private static String SENT = "SMS_SENT", DELIVERED = "SMS_DELIVERED";
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (getIntent().hasExtra("openSimConfig")) {
+            int arg = getIntent().getIntExtra("openSimConfig", 0);
+            openSimConfig();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        /*textWidget = findViewById(R.id.textView2);
-
-        appWidgetManager = AppWidgetManager.getInstance(MainActivity.this);
-        appWidgetId = 1;
-
-        textWidget.setText("coucou");*/
-
-        button = findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener()
+        switchBtn = findViewById(R.id.switchBtn);
+        sendSmsBtn = findViewById(R.id.sendSmsBtn);
+        switchBtn.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                // TODO Auto-generated method stub
-                Log.v("EditText", button.getText().toString());
-                sendDirectSMS();
+                openSimConfig(); // Open SIM selection page
             }
         });
+
+        sendSmsBtn.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                sendDirectSMS(); // send SMS on first SIM
+            }
+        });
+    }
+
+    private void openSimConfig() {
+        Intent lIntent;
+        if(Build.VERSION.SDK_INT >= 31){
+            // Page gestionnaire de carte SIM
+            lIntent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+        } else {
+            // Page connexion (puis choisir "Gestion des cartes SIM")
+            lIntent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+        }
+        lIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(lIntent);
     }
 
     private void sendDirectSMS() {
@@ -121,17 +146,17 @@ public class MainActivity extends AppCompatActivity {
                 // for ActivityCompat#requestPermissions for more details.
                 return;
             }
-            if (localSubscriptionManager.getActiveSubscriptionInfoCount() > 1) {
+            if (localSubscriptionManager.getActiveSubscriptionInfoCount() > 0) {
                 List localList = localSubscriptionManager.getActiveSubscriptionInfoList();
 
                 SubscriptionInfo simInfo1 = (SubscriptionInfo) localList.get(0);
-                SubscriptionInfo simInfo2 = (SubscriptionInfo) localList.get(1);
+                //SubscriptionInfo simInfo2 = (SubscriptionInfo) localList.get(1);
 
                 //SendSMS From SIM One
                 SmsManager.getSmsManagerForSubscriptionId(simInfo1.getSubscriptionId()).sendTextMessage("0664545968", null, smsText, sentPI, deliveredPI);
 
                 //SendSMS From SIM Two
-                SmsManager.getSmsManagerForSubscriptionId(simInfo2.getSubscriptionId()).sendTextMessage("0664545968", null, smsText, sentPI, deliveredPI);
+                //SmsManager.getSmsManagerForSubscriptionId(simInfo2.getSubscriptionId()).sendTextMessage("0664545968", null, smsText, sentPI, deliveredPI);
             }
         } else {
             //SmsManager.getDefault().sendTextMessage(customer.getMobile(), null, smsText, sentPI, deliveredPI);

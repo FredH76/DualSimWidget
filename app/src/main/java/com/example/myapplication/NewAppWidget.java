@@ -1,8 +1,12 @@
 package com.example.myapplication;
 
+import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
+import android.content.Intent;
+import android.os.Build;
+import android.provider.Settings;
 import android.widget.RemoteViews;
 
 /**
@@ -16,7 +20,12 @@ public class NewAppWidget extends AppWidgetProvider {
         CharSequence widgetText = context.getString(R.string.appwidget_text);
         // Construct the RemoteViews object
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.new_app_widget);
-        //views.setTextViewText(R.id.appwidget_text, widgetText);
+
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.putExtra("openSimConfig", 1);
+        PendingIntent pendingUpdate = PendingIntent.getActivity(context, 0, intent, 0);
+
+        views.setOnClickPendingIntent(R.id.button1, pendingUpdate);
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
