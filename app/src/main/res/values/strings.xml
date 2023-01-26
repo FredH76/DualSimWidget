@@ -3,4 +3,7 @@
     <string name="appwidget_text">SWITCH SIM</string>
     <string name="add_widget">Add widget</string>
     <string name="app_widget_description">This is an app widget description</string>
+    <string name="sms_delivered">SMS envoyé</string>
+    <string name="sms_not_delivered">erreur: SMS NON envoyé</string>
+    <string name="sms_sending">envoi en cours</string>
 </resources>
