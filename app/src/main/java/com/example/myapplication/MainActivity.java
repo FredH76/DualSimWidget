@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -19,6 +20,8 @@ import android.provider.Settings;
 import android.telephony.SmsManager;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
+import android.telephony.TelephonyManager;
+import android.telephony.euicc.EuiccManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -34,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     Button sendSmsBtn, switchBtn;
     AppWidgetManager appWidgetManager;
     int appWidgetId;
+    Integer simSlot = null;
     private static String SENT = "SMS_SENT", DELIVERED = "SMS_DELIVERED";
 
     @Override
@@ -97,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
             public void onReceive(Context arg0, Intent arg1) {
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
-                        Toast.makeText(getBaseContext(), "SMS delivré", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getBaseContext(), "SMS envoyé par SIM"+ (simSlot+1), Toast.LENGTH_SHORT).show();
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
                         Toast.makeText(getBaseContext(), "echec envoi.", Toast.LENGTH_SHORT).show();
@@ -136,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
             SubscriptionManager localSubscriptionManager = SubscriptionManager.from(this);
-            if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
                 // TODO: Consider calling
                 //    ActivityCompat#requestPermissions
                 // here to request the missing permissions, and then overriding
@@ -149,10 +153,27 @@ public class MainActivity extends AppCompatActivity {
             if (localSubscriptionManager.getActiveSubscriptionInfoCount() > 0) {
                 List localList = localSubscriptionManager.getActiveSubscriptionInfoList();
 
-                SubscriptionInfo simInfo1 = (SubscriptionInfo) localList.get(0);
+
+                /*Intent intent = new Intent(this, MainActivity.class);
+                intent.putExtra("test", 1);
+                PendingIntent pendingUpdate = PendingIntent.getActivity(this, 0, intent, 0);
+
+                TelephonyManager telephonyManager = this.getSystemService(TelephonyManager.class);
+                Boolean test = telephonyManager.hasCarrierPrivileges();
+
+                EuiccManager euiccManager = this.getSystemService(EuiccManager.class);
+                euiccManager.switchToSubscription(0, pendingUpdate);*/ // API 33
                 //SubscriptionInfo simInfo2 = (SubscriptionInfo) localList.get(1);
 
-                //SendSMS From SIM One
+                //SendSMS From first sim available
+                TelephonyManager telephonyManager = this.getSystemService(TelephonyManager.class);
+                for (int i = 0; i < localList.toArray().length; i++) {
+                    if(telephonyManager.getSimState(i) == TelephonyManager.SIM_STATE_READY){
+                        simSlot = i;
+                        break;
+                    }
+                }
+                SubscriptionInfo simInfo1 = (SubscriptionInfo) localList.get(simSlot);
                 SmsManager.getSmsManagerForSubscriptionId(simInfo1.getSubscriptionId()).sendTextMessage("0664545968", null, smsText, sentPI, deliveredPI);
 
                 //SendSMS From SIM Two
